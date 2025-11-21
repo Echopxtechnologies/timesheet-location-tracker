@@ -21,6 +21,12 @@ function staff_attendance_tracker_inject_js()
     
     if (strpos($CI->uri->uri_string(), 'timesheets/timekeeping') !== false || 
         $CI->uri->segment(2) == 'timekeeping') {
+        
+        // Get API key from settings
+        $google_api_key = get_option('staff_attendance_tracker_google_api_key');
+        if (empty($google_api_key)) {
+            $google_api_key = 'AIzaSyCxItoqJ24V5SR-jyBc_M9snAQIMRPbaAM'; // Default fallback
+        }
         ?>
         <script>
         (function($) {
@@ -113,7 +119,7 @@ function staff_attendance_tracker_inject_js()
                         url: 'https://maps.googleapis.com/maps/api/geocode/json',
                         data: {
                             latlng: lat + ',' + lng,
-                            key: 'AIzaSyCxItoqJ24V5SR-jyBc_M9snAQIMRPbaAM'
+                            key: '<?php echo $google_api_key; ?>'
                         },
                         success: function(geocodeData) {
                             var address = 'Unknown location';
@@ -180,7 +186,6 @@ function staff_attendance_tracker_inject_js()
         <?php
     }
 }
-
 /**
  * Module activation
  */
@@ -225,5 +230,14 @@ function staff_attendance_tracker_init_menu_items()
             'href'     => admin_url('staff_attendance_tracker/history'),
             'icon'     => 'fa fa-history',
         ]);
+        // Submenu - Settings (Admin only)
+        if (is_admin()) {
+            $CI->app_menu->add_sidebar_children_item('staff_attendance_tracker_main', [
+                'slug'     => 'attendance_tracker_settings',
+                'name'     => 'Settings',
+                'href'     => admin_url('staff_attendance_tracker/settings'),
+                'icon'     => 'fa fa-cog',
+            ]);
     }
+}
 }
