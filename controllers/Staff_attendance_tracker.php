@@ -10,59 +10,47 @@ class Staff_attendance_tracker extends AdminController
         $this->load->model('staff_model');
     }
 
-    /**
-     * Main view - LATEST check-in/check-out per staff
-     */
-    public function index()
-    {
-        if (!has_permission('staff', '', 'view') && !is_admin()) {
-            access_denied('staff_attendance_tracker');
-        }
-
-        $date_from = $this->input->get('date_from') ?: date('Y-m-d', strtotime('-7 days'));
-        $date_to = $this->input->get('date_to') ?: date('Y-m-d');
-        $staff_id = $this->input->get('staff_id') ?: null;
-
-        // Get LATEST check-in/check-out per staff per day
-        $data['locations'] = $this->staff_attendance_tracker_model->get_latest_locations([
-            'date_from' => $date_from,
-            'date_to' => $date_to,
-            'staff_id' => $staff_id
-        ]);
-
-        $data['title'] = 'Latest Attendance Status';
-        $data['staff_members'] = $this->staff_model->get('', ['active' => 1]);
-        $data['google_api_key'] = $this->get_google_api_key();
-        
-        $this->load->view('location_latest', $data);
+ /**
+ * Main view - LATEST check-in/check-out per staff
+ */
+public function index()
+{
+    if (!has_permission('staff', '', 'view') && !is_admin()) {
+        access_denied('staff_attendance_tracker');
     }
+
+    // Remove date filters - we only want absolute latest
+    $staff_id = $this->input->get('staff_id') ?: null;
+
+    // Get LATEST check-in/check-out per staff (one row per staff)
+    $data['locations'] = $this->staff_attendance_tracker_model->get_latest_locations([
+        'staff_id' => $staff_id
+    ]);
+
+    $data['title'] = 'Latest Attendance Status';
+    $data['staff_members'] = $this->staff_model->get('', ['active' => 1]);
+    $data['google_api_key'] = 'AIzaSyCxItoqJ24V5SR-jyBc_M9snAQIMRPbaAM';
+    
+    $this->load->view('location_latest', $data);
+}
 
     /**
      * History view - ALL check-in/check-out records
      */
-    public function history()
-    {
-        if (!has_permission('staff', '', 'view') && !is_admin()) {
-            access_denied('staff_attendance_tracker_history');
-        }
-
-        $date_from = $this->input->get('date_from') ?: date('Y-m-d', strtotime('-7 days'));
-        $date_to = $this->input->get('date_to') ?: date('Y-m-d');
-        $staff_id = $this->input->get('staff_id') ?: null;
-
-        // Get ALL records
-        $data['locations'] = $this->staff_attendance_tracker_model->get_locations([
-            'date_from' => $date_from,
-            'date_to' => $date_to,
-            'staff_id' => $staff_id
-        ]);
-
-        $data['title'] = 'Attendance Location History';
-        $data['staff_members'] = $this->staff_model->get('', ['active' => 1]);
-        $data['google_api_key'] = $this->get_google_api_key();
-        
-        $this->load->view('location_history', $data);
+ public function history()
+{
+    if (!has_permission('staff', '', 'view') && !is_admin()) {
+        access_denied('staff_attendance_tracker_history');
     }
+
+    // Get ALL records without date filters
+    $data['locations'] = $this->staff_attendance_tracker_model->get_locations([]);
+
+    $data['title'] = 'Attendance Location History';
+    $data['google_api_key'] = 'AIzaSyCxItoqJ24V5SR-jyBc_M9snAQIMRPbaAM';
+    
+    $this->load->view('location_history', $data);
+}
 
     /**
      * AJAX: Save location
@@ -113,111 +101,110 @@ class Staff_attendance_tracker extends AdminController
         ]);
     }
 
-   /**
- * View details modal
- */
-public function view_details($id)
-{
-    if (!has_permission('staff', '', 'view') && !is_admin()) {
-        access_denied();
-    }
+    /**
+     * View details modal
+     */
+    public function view_details($id)
+    {
+        if (!has_permission('staff', '', 'view') && !is_admin()) {
+            access_denied();
+        }
 
-    $this->db->select('sal.*, CONCAT(s.firstname, " ", s.lastname) as staff_name');
-    $this->db->from(db_prefix() . 'staff_attendance_locations sal');
-    $this->db->join(db_prefix() . 'staff s', 's.staffid = sal.staff_id', 'left');
-    $this->db->where('sal.id', $id);
-    $location = $this->db->get()->row_array();
+        $this->db->select('sal.*, CONCAT(s.firstname, " ", s.lastname) as staff_name');
+        $this->db->from(db_prefix() . 'staff_attendance_locations sal');
+        $this->db->join(db_prefix() . 'staff s', 's.staffid = sal.staff_id', 'left');
+        $this->db->where('sal.id', $id);
+        $location = $this->db->get()->row_array();
 
-    if (!$location) {
-        echo '<div class="alert alert-danger">Location not found</div>';
-        return;
-    }
+        if (!$location) {
+            echo '<div class="alert alert-danger">Location not found</div>';
+            return;
+        }
 
-    $type_badge = $location['check_type'] == 1 ? 'success' : 'warning';
-    $type_text = $location['check_type'] == 1 ? 'Check In' : 'Check Out';
-    $google_api_key = $this->get_google_api_key(); // Use settings
-    ?>
-    
-    <div class="row">
-        <div class="col-md-6">
-            <table class="table table-bordered">
-                <tr>
-                    <th width="40%">Staff</th>
-                    <td><?php echo $location['staff_name']; ?></td>
-                </tr>
-                <tr>
-                    <th>Type</th>
-                    <td><span class="label label-<?php echo $type_badge; ?>"><?php echo $type_text; ?></span></td>
-                </tr>
-                <tr>
-                    <th>Date & Time</th>
-                    <td><?php echo _dt($location['check_datetime']); ?></td>
-                </tr>
-                <tr>
-                    <th>IP Address</th>
-                    <td><?php echo $location['ip_address']; ?></td>
-                </tr>
-                <tr>
-                    <th>Device</th>
-                    <td><small><?php echo $location['device_info']; ?></small></td>
-                </tr>
-                <?php if ($location['notes']): ?>
-                <tr>
-                    <th>Notes</th>
-                    <td><?php echo $location['notes']; ?></td>
-                </tr>
+        $type_badge = $location['check_type'] == 1 ? 'success' : 'warning';
+        $type_text = $location['check_type'] == 1 ? 'Check In' : 'Check Out';
+        ?>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <table class="table table-bordered">
+                    <tr>
+                        <th width="40%">Staff</th>
+                        <td><?php echo $location['staff_name']; ?></td>
+                    </tr>
+                    <tr>
+                        <th>Type</th>
+                        <td><span class="label label-<?php echo $type_badge; ?>"><?php echo $type_text; ?></span></td>
+                    </tr>
+                    <tr>
+                        <th>Date & Time</th>
+                        <td><?php echo _dt($location['check_datetime']); ?></td>
+                    </tr>
+                    <tr>
+                        <th>IP Address</th>
+                        <td><?php echo $location['ip_address']; ?></td>
+                    </tr>
+                    <tr>
+                        <th>Device</th>
+                        <td><small><?php echo $location['device_info']; ?></small></td>
+                    </tr>
+                    <?php if ($location['notes']): ?>
+                    <tr>
+                        <th>Notes</th>
+                        <td><?php echo $location['notes']; ?></td>
+                    </tr>
+                    <?php endif; ?>
+                </table>
+            </div>
+            
+            <div class="col-md-6">
+                <?php if ($location['latitude'] && $location['longitude']): ?>
+                    <div class="form-group">
+                        <label>Location</label>
+                        <div id="map_<?php echo $id; ?>" style="height: 300px; border: 1px solid #ddd;"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Address</label>
+                        <p><?php echo $location['address']; ?></p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Coordinates</label>
+                        <p>
+                            <strong>Lat:</strong> <?php echo $location['latitude']; ?><br>
+                            <strong>Lng:</strong> <?php echo $location['longitude']; ?>
+                        </p>
+                    </div>
+                    
+                    <a href="https://www.google.com/maps?q=<?php echo $location['latitude']; ?>,<?php echo $location['longitude']; ?>" 
+                       target="_blank" class="btn btn-info btn-block">
+                        <i class="fa fa-external-link"></i> Open in Google Maps
+                    </a>
+                    
+                    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCxItoqJ24V5SR-jyBc_M9snAQIMRPbaAM"></script>
+                    <script>
+                    var map = new google.maps.Map(document.getElementById('map_<?php echo $id; ?>'), {
+                        center: {lat: <?php echo $location['latitude']; ?>, lng: <?php echo $location['longitude']; ?>},
+                        zoom: 15
+                    });
+                    
+                    var marker = new google.maps.Marker({
+                        position: {lat: <?php echo $location['latitude']; ?>, lng: <?php echo $location['longitude']; ?>},
+                        map: map,
+                        title: '<?php echo $type_text; ?>'
+                    });
+                    </script>
+                <?php else: ?>
+                    <div class="alert alert-warning">
+                        No GPS location available
+                    </div>
                 <?php endif; ?>
-            </table>
+            </div>
         </div>
         
-        <div class="col-md-6">
-            <?php if ($location['latitude'] && $location['longitude']): ?>
-                <div class="form-group">
-                    <label>Location</label>
-                    <div id="map_<?php echo $id; ?>" style="height: 300px; border: 1px solid #ddd;"></div>
-                </div>
-                
-                <div class="form-group">
-                    <label>Address</label>
-                    <p><?php echo $location['address']; ?></p>
-                </div>
-                
-                <div class="form-group">
-                    <label>Coordinates</label>
-                    <p>
-                        <strong>Lat:</strong> <?php echo $location['latitude']; ?><br>
-                        <strong>Lng:</strong> <?php echo $location['longitude']; ?>
-                    </p>
-                </div>
-                
-                <a href="https://www.google.com/maps?q=<?php echo $location['latitude']; ?>,<?php echo $location['longitude']; ?>" 
-                   target="_blank" class="btn btn-info btn-block">
-                    <i class="fa fa-external-link"></i> Open in Google Maps
-                </a>
-                
-                <script src="https://maps.googleapis.com/maps/api/js?key=<?php echo $google_api_key; ?>"></script>
-                <script>
-                var map = new google.maps.Map(document.getElementById('map_<?php echo $id; ?>'), {
-                    center: {lat: <?php echo $location['latitude']; ?>, lng: <?php echo $location['longitude']; ?>},
-                    zoom: 15
-                });
-                
-                var marker = new google.maps.Marker({
-                    position: {lat: <?php echo $location['latitude']; ?>, lng: <?php echo $location['longitude']; ?>},
-                    map: map,
-                    title: '<?php echo $type_text; ?>'
-                });
-                </script>
-            <?php else: ?>
-                <div class="alert alert-warning">
-                    No GPS location available
-                </div>
-            <?php endif; ?>
-        </div>
-    </div>
-    
-    <?php
-}
+        <?php
+    }
 
     /**
      * Export
@@ -258,35 +245,5 @@ public function view_details($id)
 
         fclose($output);
     }
-    /**
- * Settings page
- */
-public function settings()
-{
-    if (!is_admin()) {
-        access_denied('staff_attendance_tracker_settings');
-    }
-
-    if ($this->input->post()) {
-        $api_key = $this->input->post('google_api_key');
-        update_option('staff_attendance_tracker_google_api_key', $api_key);
-        
-        set_alert('success', 'Settings saved successfully');
-        redirect(admin_url('staff_attendance_tracker/settings'));
-    }
-
-    $data['title'] = 'Staff Attendance Tracker Settings';
-    $data['google_api_key'] = get_option('staff_attendance_tracker_google_api_key');
     
-    $this->load->view('settings', $data);
-}
-
-/**
- * Get Google API Key from settings or default
- */
-private function get_google_api_key()
-{
-    $api_key = get_option('staff_attendance_tracker_google_api_key');
-    return $api_key ?: 'AIzaSyCxItoqJ24V5SR-jyBc_M9snAQIMRPbaAM'; // Default fallback
-}
 }

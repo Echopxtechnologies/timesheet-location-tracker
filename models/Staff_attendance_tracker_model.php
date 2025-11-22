@@ -52,101 +52,101 @@ class Staff_attendance_tracker_model extends App_Model
     /**
      * Get LATEST check-in/check-out per staff per day
      */
-    public function get_latest_locations($params = [])
-    {
-        $date_from = $params['date_from'] ?? date('Y-m-d');
-        $date_to = $params['date_to'] ?? date('Y-m-d');
-        $staff_id = $params['staff_id'] ?? null;
+    // public function get_latest_locations($params = [])
+    // {
+    //     $date_from = $params['date_from'] ?? date('Y-m-d');
+    //     $date_to = $params['date_to'] ?? date('Y-m-d');
+    //     $staff_id = $params['staff_id'] ?? null;
 
-        // Get latest check-in and check-out for each staff for each day
-        $sql = "
-            SELECT 
-                s.staffid as staff_id,
-                CONCAT(s.firstname, ' ', s.lastname) as staff_name,
-                DATE(sal.check_datetime) as date,
+    //     // Get latest check-in and check-out for each staff for each day
+    //     $sql = "
+    //         SELECT 
+    //             s.staffid as staff_id,
+    //             CONCAT(s.firstname, ' ', s.lastname) as staff_name,
+    //             DATE(sal.check_datetime) as date,
                 
-                -- Latest check-in
-                (SELECT check_datetime FROM {$this->table} 
-                 WHERE staff_id = s.staffid 
-                 AND DATE(check_datetime) = DATE(sal.check_datetime)
-                 AND check_type = 1 
-                 ORDER BY check_datetime DESC LIMIT 1) as check_in_time,
+    //             -- Latest check-in
+    //             (SELECT check_datetime FROM {$this->table} 
+    //              WHERE staff_id = s.staffid 
+    //              AND DATE(check_datetime) = DATE(sal.check_datetime)
+    //              AND check_type = 1 
+    //              ORDER BY check_datetime DESC LIMIT 1) as check_in_time,
                  
-                (SELECT address FROM {$this->table} 
-                 WHERE staff_id = s.staffid 
-                 AND DATE(check_datetime) = DATE(sal.check_datetime)
-                 AND check_type = 1 
-                 ORDER BY check_datetime DESC LIMIT 1) as check_in_location,
+    //             (SELECT address FROM {$this->table} 
+    //              WHERE staff_id = s.staffid 
+    //              AND DATE(check_datetime) = DATE(sal.check_datetime)
+    //              AND check_type = 1 
+    //              ORDER BY check_datetime DESC LIMIT 1) as check_in_location,
                  
-                (SELECT latitude FROM {$this->table} 
-                 WHERE staff_id = s.staffid 
-                 AND DATE(check_datetime) = DATE(sal.check_datetime)
-                 AND check_type = 1 
-                 ORDER BY check_datetime DESC LIMIT 1) as check_in_lat,
+    //             (SELECT latitude FROM {$this->table} 
+    //              WHERE staff_id = s.staffid 
+    //              AND DATE(check_datetime) = DATE(sal.check_datetime)
+    //              AND check_type = 1 
+    //              ORDER BY check_datetime DESC LIMIT 1) as check_in_lat,
                  
-                (SELECT longitude FROM {$this->table} 
-                 WHERE staff_id = s.staffid 
-                 AND DATE(check_datetime) = DATE(sal.check_datetime)
-                 AND check_type = 1 
-                 ORDER BY check_datetime DESC LIMIT 1) as check_in_lng,
+    //             (SELECT longitude FROM {$this->table} 
+    //              WHERE staff_id = s.staffid 
+    //              AND DATE(check_datetime) = DATE(sal.check_datetime)
+    //              AND check_type = 1 
+    //              ORDER BY check_datetime DESC LIMIT 1) as check_in_lng,
                  
-                (SELECT id FROM {$this->table} 
-                 WHERE staff_id = s.staffid 
-                 AND DATE(check_datetime) = DATE(sal.check_datetime)
-                 AND check_type = 1 
-                 ORDER BY check_datetime DESC LIMIT 1) as check_in_id,
+    //             (SELECT id FROM {$this->table} 
+    //              WHERE staff_id = s.staffid 
+    //              AND DATE(check_datetime) = DATE(sal.check_datetime)
+    //              AND check_type = 1 
+    //              ORDER BY check_datetime DESC LIMIT 1) as check_in_id,
                 
-                -- Latest check-out
-                (SELECT check_datetime FROM {$this->table} 
-                 WHERE staff_id = s.staffid 
-                 AND DATE(check_datetime) = DATE(sal.check_datetime)
-                 AND check_type = 2 
-                 ORDER BY check_datetime DESC LIMIT 1) as check_out_time,
+    //             -- Latest check-out
+    //             (SELECT check_datetime FROM {$this->table} 
+    //              WHERE staff_id = s.staffid 
+    //              AND DATE(check_datetime) = DATE(sal.check_datetime)
+    //              AND check_type = 2 
+    //              ORDER BY check_datetime DESC LIMIT 1) as check_out_time,
                  
-                (SELECT address FROM {$this->table} 
-                 WHERE staff_id = s.staffid 
-                 AND DATE(check_datetime) = DATE(sal.check_datetime)
-                 AND check_type = 2 
-                 ORDER BY check_datetime DESC LIMIT 1) as check_out_location,
+    //             (SELECT address FROM {$this->table} 
+    //              WHERE staff_id = s.staffid 
+    //              AND DATE(check_datetime) = DATE(sal.check_datetime)
+    //              AND check_type = 2 
+    //              ORDER BY check_datetime DESC LIMIT 1) as check_out_location,
                  
-                (SELECT latitude FROM {$this->table} 
-                 WHERE staff_id = s.staffid 
-                 AND DATE(check_datetime) = DATE(sal.check_datetime)
-                 AND check_type = 2 
-                 ORDER BY check_datetime DESC LIMIT 1) as check_out_lat,
+    //             (SELECT latitude FROM {$this->table} 
+    //              WHERE staff_id = s.staffid 
+    //              AND DATE(check_datetime) = DATE(sal.check_datetime)
+    //              AND check_type = 2 
+    //              ORDER BY check_datetime DESC LIMIT 1) as check_out_lat,
                  
-                (SELECT longitude FROM {$this->table} 
-                 WHERE staff_id = s.staffid 
-                 AND DATE(check_datetime) = DATE(sal.check_datetime)
-                 AND check_type = 2 
-                 ORDER BY check_datetime DESC LIMIT 1) as check_out_lng,
+    //             (SELECT longitude FROM {$this->table} 
+    //              WHERE staff_id = s.staffid 
+    //              AND DATE(check_datetime) = DATE(sal.check_datetime)
+    //              AND check_type = 2 
+    //              ORDER BY check_datetime DESC LIMIT 1) as check_out_lng,
                  
-                (SELECT id FROM {$this->table} 
-                 WHERE staff_id = s.staffid 
-                 AND DATE(check_datetime) = DATE(sal.check_datetime)
-                 AND check_type = 2 
-                 ORDER BY check_datetime DESC LIMIT 1) as check_out_id,
+    //             (SELECT id FROM {$this->table} 
+    //              WHERE staff_id = s.staffid 
+    //              AND DATE(check_datetime) = DATE(sal.check_datetime)
+    //              AND check_type = 2 
+    //              ORDER BY check_datetime DESC LIMIT 1) as check_out_id,
                  
-                (SELECT ip_address FROM {$this->table} 
-                 WHERE staff_id = s.staffid 
-                 AND DATE(check_datetime) = DATE(sal.check_datetime)
-                 ORDER BY check_datetime DESC LIMIT 1) as ip_address
+    //             (SELECT ip_address FROM {$this->table} 
+    //              WHERE staff_id = s.staffid 
+    //              AND DATE(check_datetime) = DATE(sal.check_datetime)
+    //              ORDER BY check_datetime DESC LIMIT 1) as ip_address
                 
-            FROM " . db_prefix() . "staff s
-            INNER JOIN {$this->table} sal ON sal.staff_id = s.staffid
-            WHERE DATE(sal.check_datetime) >= '{$date_from}'
-            AND DATE(sal.check_datetime) <= '{$date_to}'
-        ";
+    //         FROM " . db_prefix() . "staff s
+    //         INNER JOIN {$this->table} sal ON sal.staff_id = s.staffid
+    //         WHERE DATE(sal.check_datetime) >= '{$date_from}'
+    //         AND DATE(sal.check_datetime) <= '{$date_to}'
+    //     ";
 
-        if ($staff_id) {
-            $sql .= " AND s.staffid = {$staff_id}";
-        }
+    //     if ($staff_id) {
+    //         $sql .= " AND s.staffid = {$staff_id}";
+    //     }
 
-        $sql .= " GROUP BY s.staffid, DATE(sal.check_datetime)
-                  ORDER BY DATE(sal.check_datetime) DESC, s.staffid ASC";
+    //     $sql .= " GROUP BY s.staffid, DATE(sal.check_datetime)
+    //               ORDER BY DATE(sal.check_datetime) DESC, s.staffid ASC";
 
-        return $this->db->query($sql)->result_array();
-    }
+    //     return $this->db->query($sql)->result_array();
+    // }
 
     /**
      * Get ALL locations (history)
@@ -195,4 +195,114 @@ class Staff_attendance_tracker_model extends App_Model
 
         return $this->db->affected_rows() > 0;
     }
+    /**
+ * Get ABSOLUTE LATEST check-in/check-out per staff (one row per staff)
+ */
+public function get_latest_locations($params = [])
+{
+    $staff_id = $params['staff_id'] ?? null;
+    
+    // Get absolute latest check-in and check-out for each staff
+    $sql = "
+        SELECT 
+            s.staffid as staff_id,
+            CONCAT(s.firstname, ' ', s.lastname) as staff_name,
+            s.email as staff_email,
+            
+            -- Absolute latest check-in
+            (SELECT check_datetime FROM {$this->table} 
+             WHERE staff_id = s.staffid 
+             AND check_type = 1 
+             ORDER BY check_datetime DESC LIMIT 1) as check_in_time,
+             
+            (SELECT address FROM {$this->table} 
+             WHERE staff_id = s.staffid 
+             AND check_type = 1 
+             ORDER BY check_datetime DESC LIMIT 1) as check_in_location,
+             
+            (SELECT latitude FROM {$this->table} 
+             WHERE staff_id = s.staffid 
+             AND check_type = 1 
+             ORDER BY check_datetime DESC LIMIT 1) as check_in_lat,
+             
+            (SELECT longitude FROM {$this->table} 
+             WHERE staff_id = s.staffid 
+             AND check_type = 1 
+             ORDER BY check_datetime DESC LIMIT 1) as check_in_lng,
+             
+            (SELECT id FROM {$this->table} 
+             WHERE staff_id = s.staffid 
+             AND check_type = 1 
+             ORDER BY check_datetime DESC LIMIT 1) as check_in_id,
+            
+            -- Absolute latest check-out
+            (SELECT check_datetime FROM {$this->table} 
+             WHERE staff_id = s.staffid 
+             AND check_type = 2 
+             ORDER BY check_datetime DESC LIMIT 1) as check_out_time,
+             
+            (SELECT address FROM {$this->table} 
+             WHERE staff_id = s.staffid 
+             AND check_type = 2 
+             ORDER BY check_datetime DESC LIMIT 1) as check_out_location,
+             
+            (SELECT latitude FROM {$this->table} 
+             WHERE staff_id = s.staffid 
+             AND check_type = 2 
+             ORDER BY check_datetime DESC LIMIT 1) as check_out_lat,
+             
+            (SELECT longitude FROM {$this->table} 
+             WHERE staff_id = s.staffid 
+             AND check_type = 2 
+             ORDER BY check_datetime DESC LIMIT 1) as check_out_lng,
+             
+            (SELECT id FROM {$this->table} 
+             WHERE staff_id = s.staffid 
+             AND check_type = 2 
+             ORDER BY check_datetime DESC LIMIT 1) as check_out_id,
+             
+            (SELECT ip_address FROM {$this->table} 
+             WHERE staff_id = s.staffid 
+             ORDER BY check_datetime DESC LIMIT 1) as ip_address,
+             
+            -- Calculate current status
+            CASE 
+                WHEN (SELECT check_datetime FROM {$this->table} WHERE staff_id = s.staffid AND check_type = 1 ORDER BY check_datetime DESC LIMIT 1) > 
+                     IFNULL((SELECT check_datetime FROM {$this->table} WHERE staff_id = s.staffid AND check_type = 2 ORDER BY check_datetime DESC LIMIT 1), '1900-01-01')
+                THEN 'Checked In'
+                WHEN (SELECT check_datetime FROM {$this->table} WHERE staff_id = s.staffid AND check_type = 2 ORDER BY check_datetime DESC LIMIT 1) > 
+                     IFNULL((SELECT check_datetime FROM {$this->table} WHERE staff_id = s.staffid AND check_type = 1 ORDER BY check_datetime DESC LIMIT 1), '1900-01-01')
+                THEN 'Checked Out'
+                WHEN (SELECT check_datetime FROM {$this->table} WHERE staff_id = s.staffid AND check_type = 1 ORDER BY check_datetime DESC LIMIT 1) IS NOT NULL
+                THEN 'Checked In'
+                ELSE 'No Activity'
+            END as current_status,
+            
+            -- Get the most recent datetime (either check-in or check-out)
+            GREATEST(
+                IFNULL((SELECT MAX(check_datetime) FROM {$this->table} WHERE staff_id = s.staffid AND check_type = 1), '1900-01-01'),
+                IFNULL((SELECT MAX(check_datetime) FROM {$this->table} WHERE staff_id = s.staffid AND check_type = 2), '1900-01-01')
+            ) as last_activity
+            
+        FROM " . db_prefix() . "staff s
+        WHERE s.active = 1
+        AND EXISTS (SELECT 1 FROM {$this->table} WHERE staff_id = s.staffid)
+    ";
+    
+    if ($staff_id) {
+        $sql .= " AND s.staffid = " . (int)$staff_id;
+    }
+    
+    // Sort: Checked-in staff first, then by most recent activity
+    $sql .= " ORDER BY 
+                CASE 
+                    WHEN (SELECT MAX(check_datetime) FROM {$this->table} WHERE staff_id = s.staffid AND check_type = 1) > 
+                         IFNULL((SELECT MAX(check_datetime) FROM {$this->table} WHERE staff_id = s.staffid AND check_type = 2), '1900-01-01')
+                    THEN 1
+                    ELSE 2
+                END,
+                last_activity DESC";
+    
+    return $this->db->query($sql)->result_array();
+}
 }
